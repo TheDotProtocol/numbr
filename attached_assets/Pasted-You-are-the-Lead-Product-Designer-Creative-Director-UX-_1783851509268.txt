@@ -1,0 +1,357 @@
+You are the Lead Product Designer, Creative Director, UX Architect and Senior Full-Stack Engineer for Numbr.
+
+IMPORTANT:
+Do NOT replace or remove anything already built.
+
+Build this as the next iteration of the existing website.
+
+Preserve all current functionality, authentication, founder signup flow, pricing, and design language.
+
+Expand the platform into what feels like a world-class technology company similar in polish to Apple, Stripe, Notion, Tesla and Linear.
+
+The website should feel like a future global communications company preparing for launch.
+
+==================================================
+NEW NAVIGATION ITEM
+==================================================
+
+Add a brand new navigation item:
+
+Explore Tau Phone
+
+This must become one of the flagship sections of the website.
+
+==================================================
+TAU PHONE EXPERIENCE
+==================================================
+
+The Tau Phone is the flagship hardware designed to showcase the Numbr ecosystem.
+
+It is developed by AR Holdings Group Corporation.
+
+The page should feel like an Apple keynote.
+
+Large cinematic sections.
+
+Full screen transitions.
+
+Smooth scrolling.
+
+Beautiful lighting.
+
+Floating device renders.
+
+Interactive animations.
+
+Subtle particle effects.
+
+Glassmorphism.
+
+3D movement.
+
+Micro interactions.
+
+Everything should feel premium.
+
+==================================================
+PAGE STRUCTURE
+==================================================
+
+SECTION 1
+
+Massive hero.
+
+Headline:
+
+The Phone That Was Built For A Borderless World.
+
+Subheadline:
+
+Meet Tau Phone with Numbr.
+
+One identity.
+
+One ecosystem.
+
+One experience.
+
+CTA
+
+Explore Tau Phone
+
+Reserve Early Access
+
+Background:
+
+Animated globe with communication lines.
+
+Tau Phone slowly rotating.
+
+==================================================
+
+SECTION 2
+
+Why Tau Phone?
+
+Present it like a manifesto.
+
+Explain that modern phones still rely on country-based identities.
+
+Tau Phone was designed around a persistent global identity.
+
+Not geography.
+
+Not SIM cards.
+
+You.
+
+==================================================
+
+SECTION 3
+
+The Numbr Experience
+
+Display beautiful UI mockups.
+
+Include:
+
+Numbr ID
+
++1739 482913
+
+Status:
+
+Connected Globally
+
+Features:
+
+Global Calling
+
+Messaging
+
+Global Access
+
+Premium Numbers
+
+Cloud Contacts
+
+Travel Mode
+
+==================================================
+
+SECTION 4
+
+Hardware Showcase
+
+Use large product renders.
+
+Display:
+
+Titanium frame
+
+Premium OLED Display
+
+AI Processor
+
+Satellite-ready architecture (future roadmap)
+
+Multiple cameras
+
+Wireless charging
+
+Biometric security
+
+Beautiful black and gold design language.
+
+==================================================
+
+SECTION 5
+
+Living Inside Numbr
+
+Create a visual timeline.
+
+Wake up.
+
+Receive calls.
+
+Travel.
+
+Land in another country.
+
+Continue using the same identity.
+
+Same contacts.
+
+Same communication.
+
+No confusion.
+
+==================================================
+
+SECTION 6
+
+The Future of Communication
+
+Large animated globe.
+
+Show countries lighting up.
+
+Display text explaining the long-term vision.
+
+Numbr separates identity from geography while respecting applicable telecom regulations.
+
+Connectivity is provided through partner infrastructure and evolves over time.
+
+==================================================
+
+SECTION 7
+
+Tau OS Integration
+
+Present Tau OS as the software powering Tau Phone.
+
+Features:
+
+Privacy-first
+
+Cloud Sync
+
+AI Assistant
+
+Fast Updates
+
+Unified Experience
+
+Future-ready architecture
+
+==================================================
+
+SECTION 8
+
+Roadmap
+
+Beautiful timeline.
+
+Phase 1
+
+Cloud Communication
+
+Phase 2
+
+Global Identity
+
+Phase 3
+
+eSIM Connectivity
+
+Phase 4
+
+Network Intelligence
+
+Phase 5
+
+Expanded Global Partnerships
+
+Phase 6
+
+Next-generation Communication Platform
+
+==================================================
+
+DESIGN
+
+Everything should feel premium.
+
+No generic cards.
+
+Large spacing.
+
+Immersive layouts.
+
+Apple-quality typography.
+
+Beautiful gradients.
+
+Dark mode.
+
+Gold accents.
+
+Animated transitions.
+
+3D depth.
+
+High-end product marketing.
+
+==================================================
+
+TECHNOLOGY
+
+Use:
+
+React
+
+Next.js
+
+Tailwind
+
+Framer Motion
+
+Three.js
+
+GSAP where appropriate
+
+Performance optimized.
+
+Responsive.
+
+SEO optimized.
+
+==================================================
+
+BRANDING
+
+Every page should clearly show:
+
+Numbr
+
+A company of AR Holdings Group Corporation.
+
+Include links to:
+
+Whitepaper
+
+Privacy Policy
+
+Trust & Safety
+
+Terms of Service
+
+==================================================
+
+IMPORTANT
+
+Do not make unrealistic claims.
+
+Do not state that Numbr owns telecom infrastructure today.
+
+Present the current platform accurately while clearly distinguishing:
+
+Available Today
+
+Coming Soon
+
+Future Vision
+
+The website should inspire confidence through transparency, polished execution, and a compelling long-term roadmap.
+
+==================================================
+
+FINAL GOAL
+
+When someone visits this website, they should immediately understand:
+
+• Numbr is building a serious global communications platform.
+• Tau Phone is the flagship hardware experience for that ecosystem.
+• The company has a clear product strategy, credible roadmap, and professional execution.
+• The design quality should feel comparable to a modern keynote product launch from a leading technology company.
