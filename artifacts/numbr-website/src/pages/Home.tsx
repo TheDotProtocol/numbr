@@ -10,18 +10,15 @@ import { TimelineSection } from "../components/sections/Timeline";
 import { GlobeSection } from "../components/sections/GlobeSection";
 import { TauOSSection } from "../components/sections/TauOS";
 import { RoadmapSection } from "../components/sections/Roadmap";
+import { ReserveSection } from "../components/sections/ReserveSection";
 
 export default function Home() {
   const [location] = useLocation();
 
   useEffect(() => {
-    // If routing directly to /tau-phone, scroll to hardware section
     if (location === "/tau-phone") {
       setTimeout(() => {
-        const hardwareElement = document.getElementById("hardware");
-        if (hardwareElement) {
-          hardwareElement.scrollIntoView({ behavior: "smooth" });
-        }
+        document.getElementById("hardware")?.scrollIntoView({ behavior: "smooth" });
       }, 500);
     }
   }, [location]);
@@ -29,12 +26,13 @@ export default function Home() {
   return (
     <div className="w-full bg-[#050508] overflow-x-hidden">
       <Navbar />
-      
+
       <main>
         <HeroSection />
         <ManifestoSection />
         <ExperienceSection />
         <HardwareSection />
+        <ReserveSection />
         <TimelineSection />
         <GlobeSection />
         <TauOSSection />
