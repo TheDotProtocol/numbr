@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Star, Zap, Globe, Phone, Crown, Shuffle } from "lucide-react";
+import { submitWeb3Form } from "@/lib/web3forms";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -185,6 +186,8 @@ function ReservationModal({
   mode?: "phone";
 }) {
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [includePhone, setIncludePhone] = useState(mode === "phone");
@@ -198,9 +201,39 @@ function ReservationModal({
 
   const displayNumber = number ? `+1739 ${number}` : "+1739 (auto-assigned)";
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setSubmitError("");
+    setIsSubmitting(true);
+
+    try {
+      await submitWeb3Form({
+        name,
+        email,
+        subject: `Numbr Reservation — ${planLabel}`,
+        plan: planLabel,
+        numbr_id: displayNumber,
+        include_tau_phone: includePhone ? "Yes" : "No",
+        message: [
+          "New Numbr reservation enquiry",
+          "",
+          `Name: ${name}`,
+          `Email: ${email}`,
+          `Plan: ${planLabel}`,
+          `Numbr ID: ${displayNumber}`,
+          `Tau Phone pre-book: ${includePhone ? "Yes" : "No"}`,
+        ].join("\n"),
+      });
+      setSubmitted(true);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -272,11 +305,16 @@ function ReservationModal({
                 By reserving, you agree to our Terms of Service. You will be contacted for payment details. Your spot is held for 48 hours after confirmation.
               </div>
 
+              {submitError && (
+                <p className="text-red-400 text-xs leading-relaxed">{submitError}</p>
+              )}
+
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-[#C9A84C] to-[#E8C96D] text-[#050508] py-4 font-bold uppercase tracking-wider hover:opacity-90 transition-opacity"
+                disabled={isSubmitting}
+                className="w-full bg-gradient-to-r from-[#C9A84C] to-[#E8C96D] text-[#050508] py-4 font-bold uppercase tracking-wider hover:opacity-90 transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Confirm Reservation
+                {isSubmitting ? "Sending..." : "Confirm Reservation"}
               </button>
             </form>
           </>
@@ -291,7 +329,7 @@ function ReservationModal({
             </p>
             <div className="font-mono text-[#C9A84C] text-lg font-bold my-4">{displayNumber}</div>
             <p className="text-white/30 text-xs">
-              We'll reach out to {email} within 24 hours with next steps.
+              A confirmation has been sent to {email}. We'll reach out within 24 hours with next steps.
             </p>
           </div>
         )}

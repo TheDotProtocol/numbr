@@ -8,49 +8,42 @@ const specs = [
     title: "6.67″ LTPO AMOLED",
     desc: "QHD+ · 1–120Hz · 3000 nits peak brightness",
     sub: "HDR10+ · Corning® Gorilla Glass Victus® 2",
-    status: "Available Today",
   },
   {
     icon: <Cpu className="w-5 h-5 text-[#C9A84C]" />,
     title: "Snapdragon® 8 Elite",
     desc: "4nm process · Adreno GPU · On-device AI Engine",
     sub: "Up to 16GB RAM · 512GB UFS 4.1",
-    status: "Available Today",
   },
   {
     icon: <Camera className="w-5 h-5 text-[#C9A84C]" />,
     title: "5-Camera System",
     desc: "50MP Main LYT-900 OIS + 50MP Ultra Wide",
     sub: "50MP Portrait · 50MP Periscope 5× · Laser AF",
-    status: "Available Today",
   },
   {
     icon: <BatteryCharging className="w-5 h-5 text-[#C9A84C]" />,
     title: "6000mAh Silicon-Carbon",
     desc: "100W Wired · 50W Wireless · Reverse Wireless",
     sub: "All-day power, engineered to last",
-    status: "Available Today",
   },
   {
     icon: <Wifi className="w-5 h-5 text-[#C9A84C]" />,
     title: "5G + eSIM + Dual SIM",
     desc: "Wi-Fi 7 · Bluetooth 5.4 · NFC · USB 4.0",
     sub: "Native Numbr ID integration",
-    status: "Available Today",
   },
   {
     icon: <Shield className="w-5 h-5 text-[#C9A84C]" />,
     title: "IP68 Durability",
     desc: "Aerospace-grade Titanium Frame · Ceramic Glass Back",
     sub: "Scratch-resistant · Reinforced structure",
-    status: "Available Today",
   },
   {
     icon: <Lock className="w-5 h-5 text-[#C9A84C]" />,
     title: "Privacy First",
     desc: "On-device AI · Private by design · Always in control",
     sub: "7 Years OS & Security Updates",
-    status: "Available Today",
   },
 ];
 
@@ -153,11 +146,6 @@ export function HardwareSection() {
               </div>
               <p className="text-white/60 text-xs leading-relaxed">{spec.desc}</p>
               <p className="text-white/30 text-[11px] leading-relaxed">{spec.sub}</p>
-              <div className="mt-auto pt-2">
-                <span className="text-[10px] uppercase tracking-wider font-bold text-[#C9A84C] bg-[#C9A84C]/8 border border-[#C9A84C]/25 px-2 py-1">
-                  {spec.status}
-                </span>
-              </div>
             </motion.div>
           ))}
         </div>

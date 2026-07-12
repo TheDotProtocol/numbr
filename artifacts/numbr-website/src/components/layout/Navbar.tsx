@@ -2,8 +2,6 @@ import { Link } from "wouter";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
-import numbrLogo from "@assets/Number._1783852829576.png";
-
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -32,12 +30,14 @@ export function Navbar() {
         }`}
       >
         <div className="container mx-auto px-6 lg:px-12 flex items-center justify-between">
-          <Link href="/">
+          <Link href="/" className="shrink-0">
             <img
-              src={numbrLogo}
+              src="/numbr-logo-mark.png"
               alt="Numbr"
-              className="h-10 w-auto object-contain"
-              style={{ maxWidth: "140px" }}
+              width={1315}
+              height={270}
+              className="h-11 w-auto object-contain sm:h-12 md:h-14"
+              style={{ maxWidth: "min(280px, 52vw)" }}
             />
           </Link>
 

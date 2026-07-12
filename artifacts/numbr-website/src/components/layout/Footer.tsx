@@ -1,6 +1,4 @@
 import { Link } from "wouter";
-import numbrLogo from "@assets/Number._1783852829576.png";
-
 export function Footer() {
   return (
     <footer className="bg-[#020204] pt-24 pb-12 border-t border-white/5 relative z-10">
@@ -9,10 +7,12 @@ export function Footer() {
           <div className="max-w-xs">
             <Link href="/">
               <img
-                src={numbrLogo}
+                src="/numbr-logo.png"
                 alt="Numbr"
-                className="h-12 w-auto object-contain mb-4"
-                style={{ maxWidth: "160px" }}
+                width={1331}
+                height={558}
+                className="h-16 w-auto object-contain mb-4 md:h-20"
+                style={{ maxWidth: "320px" }}
               />
             </Link>
             <p className="text-white/30 text-xs leading-relaxed mt-4">
