@@ -1,0 +1,334 @@
+rules_version = '2';
+
+// =============================================================================
+// OneNumbr — Firestore Security Rules (Manual KYC v1.0)
+//
+// New in Prompt 2:
+//   kyc/{uid}                    — verification case; client writes limited to
+//                                  draft/submit flows with field allowlists;
+//                                  review fields are server-only.
+//   kyc_history/{uid}/entries/*  — append-only review trail; server-only.
+//   notifications/{uid}/items/*  — user notifications; self-read, server-write.
+// =============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- helpers ----------
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function hasRole(r) {
+      return signedIn() && request.auth.token.get('role', '') == r;
+    }
+
+    function isAdmin() {
+      return hasRole('admin');
+    }
+
+    function isStaff() {
+      return signedIn() && request.auth.token.get('role', '') in ['admin', 'support'];
+    }
+
+    function safeCreateData() {
+      return !('role' in request.resource.data)
+        && !('status' in request.resource.data)
+        && !('onenumbr' in request.resource.data);
+    }
+
+    // ---------- users ----------
+    match /users/{uid} {
+      allow get: if isSelf(uid) || isAdmin() || hasRole('support');
+      allow list: if isAdmin() || hasRole('support');
+
+      allow create: if isSelf(uid) && safeCreateData()
+        && request.resource.data.uid == uid
+        && request.resource.data.role == 'user'
+        && request.resource.data.status == 'active';
+
+      allow update: if (isSelf(uid)
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['uid', 'email', 'updatedAt', 'lastLoginAt'])
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.status == resource.data.status)
+        || isAdmin();
+
+      allow delete: if false;
+    }
+
+    // ---------- profiles ----------
+    match /profiles/{uid} {
+      allow read: if isSelf(uid) || isAdmin();
+      allow create: if isSelf(uid)
+        && request.resource.data.uid == uid
+        && safeCreateData();
+      allow update: if (isSelf(uid)
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['uid', 'fullName', 'country', 'phone', 'avatarUrl', 'timezone', 'updatedAt']))
+        || isAdmin();
+      allow delete: if false;
+    }
+
+    // ---------- onenumbr_ids ----------
+    match /onenumbr_ids/{uid} {
+      allow read: if isSelf(uid) || isAdmin() || hasRole('support');
+      allow write: if false; // server only
+    }
+
+    // devices: managed server-side via the account APIs (Prompt 6 rules
+    // further below are the single source of truth for this collection).
+
+    // ---------- KYC (Prompt 2) ----------
+    // Users manage their own case through a strict field allowlist. Fields
+    // that decide verification outcome (status after submission, reviewedAt,
+    // reviewedBy, reviewerNotes, rejectionReason) are NEVER client-writable —
+    // those transitions happen via /api/kyc/* routes using the Admin SDK.
+    match /kyc/{uid} {
+      allow get: if isSelf(uid) || isAdmin() || hasRole('support');
+
+      allow list: if isAdmin() || hasRole('support');
+
+      allow create: if isSelf(uid)
+        && request.resource.data.uid == uid
+        // draft stage only — 'submitted' is reserved for the server route
+        && request.resource.data.status == 'draft'
+        && request.resource.data.reviewedAt == null
+        && request.resource.data.reviewedBy == null
+        && request.resource.data.reviewerNotes == null
+        && request.resource.data.rejectionReason == null
+        && request.resource.data.submittedAt == null
+        && !('attempt' in request.resource.data)
+        && request.resource.data.documentType in ['passport', 'national_id', 'driving_licence'];
+
+      allow update: if isSelf(uid)
+        // Draft edits only: only while status is still 'draft', only these
+        // fields, and review fields must remain untouched/null.
+        && resource.data.status == 'draft'
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['documentType', 'documentCountry', 'documentNumber',
+                      'documentFrontPath', 'documentBackPath', 'selfiePath',
+                      'updatedAt'])
+        && request.resource.data.reviewedAt == null
+        && request.resource.data.reviewedBy == null
+        && request.resource.data.reviewerNotes == null
+        && request.resource.data.rejectionReason == null
+        && request.resource.data.status == 'draft';
+
+      allow delete: if false;
+    }
+
+    // Review history — append-only, server-written, staff-readable.
+    match /kyc_history/{uid}/entries/{entryId} {
+      allow read: if isSelf(uid) || isAdmin();
+      allow write: if false; // server only
+    }
+
+    // User notifications — read-your-own, mark-read, server-created.
+    match /notifications/{uid}/items/{notificationId} {
+      allow read: if isSelf(uid) || isAdmin();
+      allow update: if isSelf(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow create, delete: if false; // server only
+    }
+
+    // ---------- eSIM marketplace (Prompt 3) ----------
+    // Plans: world-readable catalog of ACTIVE plans; writes via admin API
+    // routes only (Admin SDK bypasses rules; claims gate the routes).
+    match /esim_plans/{planId} {
+      allow read: if resource == null || resource.data.status == 'active'
+        || isAdmin() || hasRole('support');
+      allow write: if false; // server only
+    }
+
+    // Orders: read-your-own, all writes server-side (checkout API).
+    match /esim_orders/{orderId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid
+        || isAdmin();
+      allow write: if false; // server only
+    }
+
+    // eSIMs: read-your-own, all writes server-side (provisioning engine).
+    match /esims/{esimId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid
+        || isAdmin();
+      allow write: if false; // server only
+    }
+
+    // Checkout sessions (idempotency): server-only.
+    match /esim_checkouts/{checkoutId} {
+      allow read, write: if false;
+    }
+
+    // Numbers (Prompt 4): inventory is readable by signed-in users for the
+    // marketplace via the controlled /api/number/search API; direct client
+    // reads only allow read-your-own active numbers. All writes server-side.
+    match /numbers/{numberId} {
+      allow read: if isAdmin() || hasRole('support')
+        || (signedIn() && resource.data.uid == request.auth.uid);
+      allow write: if false; // server only (checkout, admin console)
+    }
+
+    // Assignments: read-your-own history; writes server-side only.
+    match /number_assignments/{assignmentId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid
+        || isAdmin() || hasRole('support');
+      allow write: if false; // server only
+    }
+
+    // Orders: read-your-own; all state transitions server-side.
+    match /number_orders/{orderId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid
+        || isAdmin();
+      allow write: if false; // server only
+    }
+
+    // Billing (Prompt 5): customers read their own financial records; every
+    // mutation is server-side via the billing engine. No client writes ever.
+    match /payments/{paymentId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid
+        || isAdmin();
+      allow write: if false;
+    }
+    match /invoices/{invoiceId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid
+        || isAdmin();
+      allow write: if false;
+    }
+    match /subscriptions/{subscriptionId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid
+        || isAdmin();
+      allow write: if false;
+    }
+    match /billing_events/{eventId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid
+        || isAdmin();
+      allow write: if false;
+    }
+    match /payment_methods/{methodId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false; // created lazily by the billing engine
+    }
+    match /billing_counters/{counterId} {
+      allow read, write: if false; // server-only sequence allocation
+    }
+
+    // Account & security (Prompt 6): sessions, devices, security state and
+    // login history are server-managed. Clients read their own sessions/
+    // devices for display; every mutation goes through the account APIs.
+    match /sessions/{sessionId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false; // server only (register/revoke)
+    }
+    match /devices/{deviceId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false; // server only (register/rename/remove)
+    }
+    match /account_security/{uid} {
+      allow read: if signedIn() && uid == request.auth.uid;
+      allow write: if false; // server only (status, 2FA, lifecycle)
+    }
+    match /login_events/{eventId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false; // server only (security activity log)
+    }
+
+    // User-controlled preferences (the only client-writable account docs).
+    match /notification_preferences/{uid} {
+      allow read: if signedIn() && uid == request.auth.uid;
+      allow create, update: if signedIn() && uid == request.auth.uid
+        && request.resource.data.uid == uid
+        // Mandatory security notifications can never be disabled.
+        && request.resource.data.securityNewLogin == true;
+      allow delete: if false;
+    }
+    match /privacy_settings/{uid} {
+      allow read: if signedIn() && uid == request.auth.uid;
+      allow create, update: if signedIn() && uid == request.auth.uid
+        && request.resource.data.uid == uid;
+      allow delete: if false;
+    }
+
+    // ---------- Support & operations (Prompt 7) ----------
+    // Customers read only their own tickets (view data — messages/notes are
+    // never projected by the customer API and subcollections are client-
+    // denied). ALL writes flow through server routes.
+    match /support_tickets/{ticketId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false; // server only (create/reply/status/assignment)
+      match /{sub=**} {
+        allow read, write: if false; // messages + internal_notes: server only
+      }
+    }
+    match /support_counters/{docId} {
+      allow read, write: if false; // server-only sequences
+    }
+    match /operational_alerts/{docId} {
+      allow read: if isAdmin();
+      allow write: if false; // written by the ops engine
+    }
+
+    // ---------- future / privileged collections ----------
+    // (security_events was removed in the Prompt 10 audit: no code reads or
+    // writes that collection — security activity lives in login_events.)
+    match /api_keys/{document=**}  { allow read, write: if false; }
+
+    // Prompt 10 — rate limiting (server-only counters).
+    match /rate_limits/{docId} {
+      allow read, write: if false;
+    }
+
+    // ---------- Communications (Prompt 11) ----------
+    // calls / messages / voicemails: read-your-own; every write flows through
+    // the communications engine (demo provider). Bodies are user records —
+    // never world-readable, never client-writable.
+    match /calls/{callId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false; // server only
+    }
+    match /messages/{messageId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false; // server only
+    }
+    match /voicemails/{voicemailId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false; // server only
+    }
+    // Endpoints + routing + preferences: user-scoped documents the engine
+    // manages; client reads own only.
+    match /communication_endpoints/{endpointId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false; // server only
+    }
+    match /routing_rules/{uid} {
+      allow read: if signedIn() && uid == request.auth.uid;
+      allow write: if false; // server only
+    }
+    match /communication_preferences/{uid} {
+      allow read: if signedIn() && uid == request.auth.uid;
+      allow write: if false; // server only
+    }
+
+    // Connectivity connections (Prompt 14): owner-scoped reads, server-only
+    // writes. Provider references (ICCID/IMSI/etc.) are internal — never the
+    // OneNumbr Number — but stay owner-visible only.
+    match /connectivity_connections/{connectionId} {
+      allow read: if signedIn() && resource.data.uid == request.auth.uid;
+      allow write: if false; // server only
+    }
+
+    match /audit_logs/{logId} {
+      allow get, list: if isAdmin();
+      allow create, update, delete: if false; // server only
+    }
+
+    // ---------- deny all ----------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

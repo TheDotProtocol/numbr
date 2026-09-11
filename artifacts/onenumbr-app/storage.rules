@@ -1,0 +1,95 @@
+rules_version = '2';
+
+// =============================================================================
+// OneNumbr — Cloud Storage Security Rules (Manual KYC v1.0)
+//
+// KYC files are PRIVATE. Users read/write only their own verification files;
+// admins get access through short-lived server-signed URLs only (the Admin
+// SDK bypasses rules, so no public or broad admin read path exists here).
+// =============================================================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return signedIn() && request.auth.token.get('role', '') == 'admin';
+    }
+
+    function validImage() {
+      return request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // ---- Profile avatars (Prompt 1) ----
+    match /avatars/{uid}/{fileName} {
+      allow read: if true; // avatars render via public URLs
+      allow write: if isSelf(uid) && validImage();
+      allow delete: if isSelf(uid) || isAdmin();
+    }
+
+    // ---- KYC verification files (Prompt 2) — strictly private ----
+    // Images or PDFs, max 5 MB, owner-only read/write. No public access,
+    // no token-URL reliance: admins view via server-generated signed URLs.
+    // Deletes are server-side only (KYC engine), so an overwritable name can
+    // never be used to evade the upload-time MIME/size validation.
+    function validKycFile() {
+      return request.resource.size < 5 * 1024 * 1024
+        && (request.resource.contentType.matches('image/png')
+            || request.resource.contentType.matches('image/jpeg')
+            || request.resource.contentType.matches('application/pdf'));
+    }
+
+    match /kyc/{uid}/documents/{fileName} {
+      allow read: if isSelf(uid) || isAdmin();
+      allow create, update: if isSelf(uid) && validKycFile();
+      allow delete: if false; // server-side (Admin SDK) removals only
+    }
+
+    match /kyc/{uid}/selfie/{fileName} {
+      allow read: if isSelf(uid) || isAdmin();
+      allow create, update: if isSelf(uid) && validKycFile();
+      allow delete: if false; // server-side (Admin SDK) removals only
+    }
+
+    // ---- Support attachments (Prompt 7) — strictly private ----
+    // Owner-only read/write, conservative types (PNG/JPEG/PDF), 10 MB cap.
+    // Agents never browse Storage directly; they access attachments through
+    // owner-checked ticket APIs. No public URLs are ever created.
+    function validSupportFile() {
+      return request.resource.size < 10 * 1024 * 1024
+        && (request.resource.contentType.matches('image/png')
+            || request.resource.contentType.matches('image/jpeg')
+            || request.resource.contentType.matches('application/pdf'));
+    }
+
+    match /support/{uid}/{fileName} {
+      allow read: if isSelf(uid);
+      allow write: if isSelf(uid) && validSupportFile();
+      allow delete: if isSelf(uid);
+    }
+
+    // ---- Private user documents (future prompts) ----
+    match /documents/{uid}/{fileName} {
+      allow read: if isSelf(uid) || isAdmin();
+      allow create, update: if isSelf(uid)
+        && request.resource.size < 5 * 1024 * 1024
+        && (request.resource.contentType.matches('image/png')
+            || request.resource.contentType.matches('image/jpeg')
+            || request.resource.contentType.matches('application/pdf'));
+      allow delete: if false; // server-side removals only
+    }
+
+    // Deny everything else.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
